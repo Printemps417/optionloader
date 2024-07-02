@@ -5,6 +5,7 @@ import (
 	"github.com/cloudwego/kitex/pkg/circuitbreak"
 	"github.com/cloudwego/kitex/pkg/retry"
 	"github.com/cloudwego/kitex/pkg/rpctimeout"
+	"strings"
 	"time"
 )
 
@@ -43,21 +44,47 @@ type Timeout rpctimeout.RPCTimeout
 // RetryPolicy
 type RetryPolicy retry.Policy
 
+type Config interface {
+	String() string
+}
+
 // CircuitBreaker
 type Circuitbreaker circuitbreak.CBConfig
 type YMLConfig struct {
-	ClientBasicInfo EndpointBasicInfo `yaml:"ClientBasicInfo"`
-	HostPorts       string            `yaml:"HostPorts"`
-	DestService     string            `yaml:"DestService"`
-	Protocol        string            `yaml:"Protocol"`
-	Connection      Connection        `yaml:"Connection"`
+	ClientBasicInfo *EndpointBasicInfo `yaml:"ClientBasicInfo"`
+	HostPorts       []string           `yaml:"HostPorts"`
+	DestService     *string            `yaml:"DestService"`
+	Protocol        *string            `yaml:"Protocol"`
+	Connection      *Connection        `yaml:"Connection"`
+	CustomConfig    Config             `yaml:"CustomConfigConfig"`
 }
 
-func (c YMLConfig) String() string {
-	return fmt.Sprintf("ClientBasicInfo: %v\n"+
-		" HostPorts: %d\n"+
-		" DestService: %s\n"+
-		" Protocol: %s\n"+
-		" Connection: %v\n",
-		c.ClientBasicInfo, c.HostPorts, c.DestService, c.Protocol, c.Connection)
+func (c *YMLConfig) String() string {
+	var builder strings.Builder
+
+	if c.ClientBasicInfo != nil {
+		builder.WriteString(fmt.Sprintf("ClientBasicInfo: %v\n", *c.ClientBasicInfo))
+	}
+
+	if c.HostPorts != nil {
+		builder.WriteString(fmt.Sprintf("HostPorts: %v\n", c.HostPorts))
+	}
+
+	if c.DestService != nil {
+		builder.WriteString(fmt.Sprintf("DestService: %v\n", *c.DestService))
+	}
+
+	if c.Protocol != nil {
+		builder.WriteString(fmt.Sprintf("Protocol: %v\n", *c.Protocol))
+	}
+
+	if c.Connection != nil {
+		builder.WriteString(fmt.Sprintf("Connection: %v\n", *c.Connection))
+	}
+
+	if c.CustomConfig != nil {
+		builder.WriteString(c.CustomConfig.String())
+	}
+
+	return builder.String()
 }
